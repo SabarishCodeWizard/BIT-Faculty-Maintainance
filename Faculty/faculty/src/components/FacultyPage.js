@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import './FacultyPage';  // Import the styles
+import './FacultyPage.css'
 
 const FacultyPage = () => {
   const { faculty_id } = useParams();

@@ -20,14 +20,20 @@ const AdminLogin = () => {
     }
 
     const auth = getAuth();
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate('/admin'); // Redirect to admin page after successful login
+      // Use signInWithEmailAndPassword with popup flow
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+      console.log('Login successful:', userCredential.user);
+      alert("Login successful!");
+      
+      // Navigate to admin dashboard
+      navigate('/admin');
     } catch (err) {
       console.error('Login Error:', err.code, err.message);
-      alert(`Login failed: ${err.message}`);
       
-      // Detailed error handling
+      // Display user-friendly error messages
       switch (err.code) {
         case 'auth/invalid-email':
           alert('The email address is invalid.');
@@ -51,7 +57,7 @@ const AdminLogin = () => {
   };
 
   return (
-    <div>
+    <div className="login-container">
       <h1>Admin Login</h1>
       <input
         type="email"
