@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Bar, Line } from 'react-chartjs-2';
-import { Chart as ChartJS, Title, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement } from 'chart.js';
-
-// Register required Chart.js components
-ChartJS.register(Title, Tooltip, Legend, CategoryScale, LinearScale, BarElement, PointElement, LineElement);
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS } from 'chart.js/auto';
+import axios from 'axios';
 
 const AnalyticsDashboard = () => {
   const [facultyCount, setFacultyCount] = useState(0);
@@ -12,66 +10,77 @@ const AnalyticsDashboard = () => {
 
   useEffect(() => {
     // Fetch faculty count
-    fetch('http://localhost:5000/faculty/count')
-      .then(res => res.json())
-      .then(data => setFacultyCount(data.count));
+    axios.get('http://localhost:5000/faculty/count')
+      .then(response => setFacultyCount(response.data.count))
+      .catch(err => console.error('Error fetching faculty count:', err));
 
     // Fetch department distribution
-    fetch('http://localhost:5000/faculty/department-distribution')
-      .then(res => res.json())
-      .then(data => setDepartmentDistribution(data));
+    axios.get('http://localhost:5000/faculty/department-distribution')
+      .then(response => setDepartmentDistribution(response.data))
+      .catch(err => console.error('Error fetching department distribution:', err));
 
     // Fetch login trends
-    fetch('http://localhost:5000/faculty/login-trends')
-      .then(res => res.json())
-      .then(data => setLoginTrends(data));
+    axios.get('http://localhost:5000/faculty/login-trends')
+      .then(response => setLoginTrends(response.data))
+      .catch(err => console.error('Error fetching login trends:', err));
   }, []);
 
-  // Department distribution chart (Bar chart)
-  const departmentData = {
-    labels: departmentDistribution.map(item => item._id),
-    datasets: [
-      {
-        label: 'Faculty Count by Department',
-        data: departmentDistribution.map(item => item.count),
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
-      },
-    ],
-  };
+  // Prepare department distribution data for chart
+  const departmentLabels = departmentDistribution.map(dept => dept._id);
+  const departmentData = departmentDistribution.map(dept => dept.count);
 
-  // Login trends chart (Line chart)
-  const loginTrendData = {
-    labels: loginTrends.map(item => item.date),
-    datasets: [
-      {
-        label: 'Logins',
-        data: loginTrends.map(item => item.count),
-        fill: false,
-        borderColor: 'rgba(75, 192, 192, 1)',
-        tension: 0.1,
-      },
-    ],
-  };
+  // Prepare login trends data for chart (if necessary)
+  const loginLabels = loginTrends.map(trend => `${trend._id.month}-${trend._id.year}`);
+  const loginData = loginTrends.map(trend => trend.count);
 
   return (
     <div>
-      <h2>Analytics Dashboard</h2>
+      <h1>Analytics Dashboard</h1>
+      <h2>Faculty Count: {facultyCount}</h2>
 
-      <div>
-        <h3>Total Faculty Count: {facultyCount}</h3>
-      </div>
+      <h3>Department Distribution</h3>
+      <ul>
+        {departmentDistribution.map(dept => (
+          <li key={dept._id}>{dept._id}: {dept.count}</li>
+        ))}
+      </ul>
 
-      <div>
-        <h3>Department-wise Distribution</h3>
-        <Bar data={departmentData} />
-      </div>
+      <h3>Department Distribution Chart</h3>
+      <Line
+        data={{
+          labels: departmentLabels,
+          datasets: [{
+            label: 'Faculty Count by Department',
+            data: departmentData,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            fill: false,
+          }],
+        }}
+        options={{ responsive: true }}
+      />
 
-      <div>
-        <h3>Login Trends</h3>
-        <Line data={loginTrendData} />
-      </div>
+      <h3>Login Trends</h3>
+      <ul>
+        {loginTrends.map(trend => (
+          <li key={trend._id.year + '-' + trend._id.month}>
+            {trend._id.month}-{trend._id.year}: {trend.count}
+          </li>
+        ))}
+      </ul>
+
+      <h3>Login Trends Chart</h3>
+      <Line
+        data={{
+          labels: loginLabels,
+          datasets: [{
+            label: 'Login Trends',
+            data: loginData,
+            borderColor: 'rgba(153, 102, 255, 1)',
+            fill: false,
+          }],
+        }}
+        options={{ responsive: true }}
+      />
     </div>
   );
 };

@@ -1,4 +1,5 @@
 const Faculty = require('../models/Faculty');
+const moment = require('moment');
 
 const getFacultyDetails = async (req, res) => {
   try {
@@ -17,7 +18,6 @@ const getFacultyDetails = async (req, res) => {
   }
 };
 
-// Get total faculty count
 const getFacultyCount = async (req, res) => {
   try {
     const count = await Faculty.countDocuments();
@@ -27,32 +27,43 @@ const getFacultyCount = async (req, res) => {
   }
 };
 
-// Get department-wise distribution
 const getDepartmentDistribution = async (req, res) => {
   try {
-    const distribution = await Faculty.aggregate([
-      { $group: { _id: "$dept", count: { $sum: 1 } } },
+    const departments = await Faculty.aggregate([
+      {
+        $group: {
+          _id: "$dept",
+          count: { $sum: 1 }
+        }
+      }
     ]);
-    res.status(200).json(distribution);
+    res.status(200).json(departments);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Get login trends (this would require a separate implementation to track logins, assuming a `logins` collection exists)
 const getLoginTrends = async (req, res) => {
   try {
-    // Placeholder data, assuming you have a `logins` collection
-    const loginTrends = [
-      { date: '2025-01-01', count: 10 },
-      { date: '2025-01-02', count: 15 },
-      { date: '2025-01-03', count: 12 },
-    ];
+    // Assuming you have a "lastLogin" field in your Faculty schema
+    const loginTrends = await Faculty.aggregate([
+      {
+        $project: {
+          month: { $month: "$lastLogin" },
+          year: { $year: "$lastLogin" },
+        }
+      },
+      {
+        $group: {
+          _id: { year: "$year", month: "$month" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
     res.status(200).json(loginTrends);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-
-module.exports = { getFacultyDetails , getFacultyCount, getDepartmentDistribution, getLoginTrends };
+module.exports = { getFacultyDetails,getFacultyCount, getDepartmentDistribution, getLoginTrends };
